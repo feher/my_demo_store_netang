@@ -22,6 +22,26 @@ var app = builder.Build();
 app.MapControllers();
 
 //--------------------------------------------------
+// Misc.
+
+try
+{
+    using var services = app.Services.CreateScope();
+    var context = services.ServiceProvider.GetService<StoreContext>()!;
+
+    // Apply pending migrations.
+    await context.Database.MigrateAsync();
+
+    // Seed some test data to the database.
+    await StoreContextSeed.SeedDataAsync(context);
+}
+catch (System.Exception ex)
+{
+    Console.WriteLine(ex);
+    throw;
+}
+
+//--------------------------------------------------
 // Run the app.
 
 app.Run();
