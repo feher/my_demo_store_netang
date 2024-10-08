@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Core.Entities;
 using Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +13,7 @@ public class ProductsRepository(StoreContext context) : IProductsRepository
 
     public async Task<Product?> GetProductByIdAsync(int id)
     {
-        var product = await context.Products.FindAsync(id);
-        return (product is not null) ? product : null;
+        return await context.Products.FindAsync(id);
     }
 
     public async Task<IReadOnlyList<Product>> GetProductsAsync(string? brandName, string? typeName, string? sortType)
