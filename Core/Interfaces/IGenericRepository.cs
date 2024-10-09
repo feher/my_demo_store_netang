@@ -11,6 +11,8 @@ where TEntity : BaseEntity
     Task<TResult?> GetBySpec<TResult>(ISpecification<TEntity, TResult> specification);
     Task<IReadOnlyList<TResult>> GetAllBySpecAsync<TResult>(ISpecification<TEntity, TResult> specification);
 
+    Task<int> Count<TResult>(ISpecification<TEntity, TResult> specification);
+
     void Create(TEntity entity);
     void Update(TEntity entity);
     void Delete(TEntity entity);

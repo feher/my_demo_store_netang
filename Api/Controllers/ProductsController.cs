@@ -1,3 +1,4 @@
+using Api.RequestHelpers;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -5,16 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")] // Will become "api/products".
-public class ProductsController(IGenericRepository<Product> repository) : ControllerBase
+public class ProductsController(IGenericRepository<Product> repository) : BaseApiController
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Product>>> GetProducts(string? brand, string? type, string? sort)
+    public async Task<ActionResult<Pagination<Product>>> GetProducts([FromQuery] ProductParams paramz)
     {
-        var products = await repository.GetAllBySpecAsync(new ProductSpecification<Product>(
-            brandName: brand, typeName: type, sortType: sort));
-        return new ActionResult<IReadOnlyList<Product>>(products);
+        var specParams = paramz.ToSpecParams();
+        var spec = new ProductSpecification<Product>(specParams);
+        var result = await CreatePagedResultAsync(repository, spec, specParams.PageIndex, specParams.PageSize);
+        return result;
     }
 
     [HttpGet("{id:int}")] // api/products/123
@@ -27,14 +27,24 @@ public class ProductsController(IGenericRepository<Product> repository) : Contro
     [HttpGet("brands")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetBrands()
     {
-        var brands = await repository.GetAllBySpecAsync(new ProductSpecification<string>(selectField: "brand", distinct: true));
+        var specParams = new ProductSpecParams()
+        {
+            SelectField = nameof(Product.Brand),
+            IsSelectionDistinct = true
+        };
+        var brands = await repository.GetAllBySpecAsync(new ProductSpecification<string>(specParams));
         return new ActionResult<IReadOnlyList<string>>(brands);
     }
 
     [HttpGet("types")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetTypes()
     {
-        var types = await repository.GetAllBySpecAsync(new ProductSpecification<string>(selectField: "type", distinct: true));
+        var specParams = new ProductSpecParams()
+        {
+            SelectField = nameof(Product.Type),
+            IsSelectionDistinct = true
+        };
+        var types = await repository.GetAllBySpecAsync(new ProductSpecification<string>(specParams));
         return new ActionResult<IReadOnlyList<string>>(types);
     }
 

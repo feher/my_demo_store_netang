@@ -5,11 +5,12 @@ namespace Core.Specifications;
 public class ProductSpecification<TResult> : BaseSpecification<Product, TResult>
 where TResult : class
 {
-    public ProductSpecification(string? brandName = null, string? typeName = null, string? sortType = null, string? selectField = null, bool distinct = true)
-    : base(product => (string.IsNullOrWhiteSpace(brandName) || product.Brand == brandName) &&
-                      (string.IsNullOrWhiteSpace(typeName) || product.Type == typeName))
+    public ProductSpecification(ProductSpecParams specParams)
+    : base(product => (string.IsNullOrWhiteSpace(specParams.SearchTerm) || product.Name.ToLower().Contains(specParams.SearchTerm)) &&
+                      (specParams.Brands.Count == 0 || specParams.Brands.Contains(product.Brand)) &&
+                      (specParams.Types.Count == 0 || specParams.Types.Contains(product.Type)))
     {
-        switch (sortType)
+        switch (specParams.SortBy)
         {
             case "priceAsc":
                 OrderBy = product => product.Price;
@@ -22,18 +23,24 @@ where TResult : class
                 break;
         }
 
-#pragma warning disable CS8603 // Possible null reference return.
-        switch (selectField)
+        if (!string.IsNullOrWhiteSpace(specParams.SelectField))
         {
-            case "brand":
-                Select = product => product.Brand as TResult;
-                break;
-            case "type":
-                Select = product => product.Type as TResult;
-                break;
-        }
+#pragma warning disable CS8603 // Possible null reference return.
+            switch (specParams.SelectField)
+            {
+                case nameof(Product.Brand):
+                    Select = product => product.Brand as TResult;
+                    break;
+                case nameof(Product.Type):
+                    Select = product => product.Type as TResult;
+                    break;
+            }
+            Distinct = specParams.IsSelectionDistinct;
 #pragma warning restore CS8603 // Possible null reference return.
+        }
 
-        Distinct = distinct;
+        IsPagingEnabled = specParams.IsPagingEnabled;
+        Skip = (specParams.PageIndex - 1) * specParams.PageSize;
+        Take = specParams.PageSize;
     }
 }

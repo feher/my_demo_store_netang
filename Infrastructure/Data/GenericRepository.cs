@@ -22,6 +22,25 @@ where T : BaseEntity
         return await context.Set<T>().FindAsync(id);
     }
 
+    public async Task<TResult?> GetBySpec<TResult>(ISpecification<T, TResult> specification)
+    {
+        var query = ApplySpecification(specification);
+        return await query.FirstOrDefaultAsync();
+    }
+
+    public async Task<IReadOnlyList<TResult>> GetAllBySpecAsync<TResult>(ISpecification<T, TResult> specification)
+    {
+        var query = ApplySpecification(specification);
+        return await query.ToListAsync();
+    }
+
+    public async Task<int> Count<TResult>(ISpecification<T, TResult> specification)
+    {
+        // For item count, we need to apply only the category (i.e. the filtering).
+        var query = ApplyCategorySpecification(specification);
+        return await query.CountAsync();
+    }
+
     public void Update(T entity)
     {
         context.Set<T>().Update(entity);
@@ -42,20 +61,16 @@ where T : BaseEntity
         return (await context.SaveChangesAsync()) > 0;
     }
 
-    public async Task<TResult?> GetBySpec<TResult>(ISpecification<T, TResult> specification)
-    {
-        var query = ApplySpecification(specification);
-        return await query.FirstOrDefaultAsync();
-    }
-
-    public async Task<IReadOnlyList<TResult>> GetAllBySpecAsync<TResult>(ISpecification<T, TResult> specification)
-    {
-        var query = ApplySpecification(specification);
-        return await query.ToListAsync();
-    }
-
     private IQueryable<TResult> ApplySpecification<TResult>(ISpecification<T, TResult> specification)
     {
-        return SpecificationEvaluator<T, TResult>.GetQuery(context.Set<T>().AsQueryable(), specification);
+        return SpecificationEvaluator<T, TResult>.Evaluate(context.Set<T>().AsQueryable(), specification);
+    }
+
+    private IQueryable<TResult> ApplyCategorySpecification<TResult>(ISpecification<T, TResult> specification)
+    {
+        return SpecificationEvaluator<T, TResult>.Evaluate(
+            context.Set<T>().AsQueryable(),
+            specification,
+            [ SpecificationPart.Criteria ]);
     }
 }
