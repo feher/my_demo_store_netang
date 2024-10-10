@@ -14,12 +14,18 @@ builder.Services.AddDbContext<StoreContext>(opt =>
 });
 builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddCors();
 
 var app = builder.Build();
 
 //--------------------------------------------------
 // Configure the HTTP request pipeline.
 
+// Allow requests from our web client.
+// The web client lives at localhost:4200 (different domain than the this server API).
+app.UseCors(b => b.AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .WithOrigins("http://localhost:4200", "https://localhost:4200"));
 app.MapControllers();
 
 //--------------------------------------------------
