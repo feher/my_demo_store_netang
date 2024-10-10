@@ -1,3 +1,4 @@
+using Api.Middleware;
 using Core.Interfaces;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ var app = builder.Build();
 //--------------------------------------------------
 // Configure the HTTP request pipeline.
 
+app.UseMiddleware<ExceptionMiddleware>();
 // Allow requests from our web client.
 // The web client lives at localhost:4200 (different domain than the this server API).
 app.UseCors(b => b.AllowAnyHeader()
@@ -42,7 +44,7 @@ try
     // Seed some test data to the database.
     await StoreContextSeed.SeedDataAsync(context);
 }
-catch (System.Exception ex)
+catch (Exception ex)
 {
     Console.WriteLine(ex);
     throw;
